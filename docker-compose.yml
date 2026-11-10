@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: access
+      POSTGRES_DB: access
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      retries: 30
+
+  api:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:access@db:5432/access
+      OIDC_ISSUER: http://localhost:8000/oidc
+      SEED_DOORS: ${SEED_DOORS:-0}
+    depends_on:
+      db: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
+      interval: 2s
+      retries: 30
+
+  # Four simulated door controllers badging every few seconds, with occasional tailgates.
+  simulator:
+    build: .
+    command: python -m app.loadtest ws --doors 4 --events 100000 --interval 3 --tailgate-rate 0.1
+    environment:
+      ACC_API_URL: http://api:8000
+    depends_on:
+      api: { condition: service_healthy }

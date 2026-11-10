@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.db
+node_modules/
+ui/dist/
+ui/test-results/
+ui/playwright-report/
+.terraform/
+.terraform.lock.hcl
+*.tfstate*
+*.pt
+.env
+.DS_Store
